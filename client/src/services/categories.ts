@@ -1,6 +1,6 @@
-export type Dictionary = { [key: string]: string };
+import { AbbrTitle } from '../types';
 
-export const categoriesDict: Dictionary = {
+export const categoriesDict: AbbrTitle = {
   'astro-ph': 'Astrophysics',
   'astro-ph.CO': 'Cosmology and Nongalactic Astrophysics',
   'astro-ph.EP': 'Earth and Planetary Astrophysics',
@@ -156,7 +156,7 @@ export const categoriesDict: Dictionary = {
   'stat.TH': 'Statistics Theory',
 };
 
-export const subjects: Dictionary = {
+export const subjects: AbbrTitle = {
   cs: 'Computer Science',
   physics: 'Physics',
   math: 'Mathematics',

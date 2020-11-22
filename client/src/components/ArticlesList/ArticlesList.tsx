@@ -1,4 +1,9 @@
-import React, { useEffect, useState, FunctionComponent } from 'react';
+import React, {
+  useEffect,
+  useState,
+  FunctionComponent,
+  ChangeEvent,
+} from 'react';
 import dayjs from 'dayjs';
 import './ArticlesList.css';
 import { categoriesDict } from '../../services/categories';
@@ -8,14 +13,15 @@ import {
   getArticleId,
   parseGreekLetters,
 } from '../../services/dataHelpers';
+import { Article, Dictionary, AbbrTitle } from '../../types';
 
 interface ArticlesListProps {
-  articleList: any;
-  selectedAuthor: any;
-  authorDict: any;
-  setSelectedAuthor: any;
-  selectedArticle: any;
-  setSelectedArticle: any;
+  articleList: Article[];
+  authorDict: Dictionary;
+  selectedArticle: string;
+  selectedAuthor: string;
+  setSelectedArticle: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedAuthor: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const ArticlesList: FunctionComponent<ArticlesListProps> = ({
@@ -26,13 +32,13 @@ const ArticlesList: FunctionComponent<ArticlesListProps> = ({
   selectedArticle,
   setSelectedArticle,
 }) => {
-  const [filteredList, setFilteredList] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [filteredList, setFilteredList] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<AbbrTitle>({});
   const [sortOrder, setSortOrder] = useState('newest');
   const history = useHistory();
 
   useEffect(() => {
-    setFilteredList(() => sortArticleList([...articleList]));
+    setFilteredList(sortArticleList([...articleList]));
     if (authorDict[selectedAuthor]) {
       setFilteredList(() =>
         selectedArticle
@@ -47,11 +53,13 @@ const ArticlesList: FunctionComponent<ArticlesListProps> = ({
 
     if (articleList.length > 0) {
       setCategories(() => {
-        let catDict = {};
+        let catDict: AbbrTitle = {};
         articleList.forEach((ar) => {
           ar.category.forEach((cat) => {
-            if (!catDict[cat.$.term] && categoriesDict[cat.$.term])
+            if (!(cat && cat.$)) return;
+            if (!catDict[cat.$.term] && categoriesDict[cat.$.term]) {
               catDict[cat.$.term] = categoriesDict[cat.$.term];
+            }
           });
         });
         return catDict;
@@ -73,7 +81,7 @@ const ArticlesList: FunctionComponent<ArticlesListProps> = ({
     );
   }
 
-  const handleDateFilter = (e) => {
+  const handleDateFilter = (e: ChangeEvent<HTMLSelectElement>) => {
     setSortOrder(e.target.value);
     setFilteredList(() => {
       return e.target.value === 'newest'
@@ -82,39 +90,37 @@ const ArticlesList: FunctionComponent<ArticlesListProps> = ({
     });
   };
 
-  const handleCategoryFilter = (e) => {
+  const handleCategoryFilter = (e: ChangeEvent<HTMLSelectElement>) => {
     setFilteredList(() => {
       if (e.target.value === 'none') return [...articleList];
-      const filtered = articleList.map((ar) => {
-        const tempCat = ar.category.filter(
-          (cat) => cat.$.term === e.target.value
-        );
-        if (tempCat.length > 0) return ar;
-      });
-      return sortArticleList(
-        [...filtered].filter((el) => el !== undefined),
-        sortOrder
-      );
+      const filtered = articleList
+        .map((ar) => {
+          const tempCat = ar.category.filter(
+            (cat) => cat?.$?.term === e.target.value
+          );
+          if (tempCat.length > 0) return ar;
+        })
+        .filter(Boolean);
+      return sortArticleList([...filtered] as Article[], sortOrder);
     });
   };
 
-  const handleSearchFilter = (e) => {
+  const handleSearchFilter = (e: ChangeEvent<HTMLInputElement>) => {
     setFilteredList(() => {
-      const filtered = articleList.map((ar) => {
-        const tempAuth = ar.author.filter((au) =>
-          au.name[0].toLowerCase().includes(e.target.value.toLowerCase())
-        );
+      const filtered = articleList
+        .map((ar) => {
+          const tempAuth = ar.author.filter((au) =>
+            au.name[0].toLowerCase().includes(e.target.value.toLowerCase())
+          );
 
-        const tempTitle = ar.title[0]
-          .toLowerCase()
-          .includes(e.target.value.toLowerCase());
+          const tempTitle = ar.title[0]
+            .toLowerCase()
+            .includes(e.target.value.toLowerCase());
 
-        if (tempAuth.length > 0 || tempTitle) return ar;
-      });
-      return sortArticleList(
-        [...filtered].filter((el) => el !== undefined),
-        sortOrder
-      );
+          if (tempAuth.length > 0 || tempTitle) return ar;
+        })
+        .filter(Boolean);
+      return sortArticleList([...filtered] as Article[], sortOrder);
     });
   };
 
@@ -266,8 +272,9 @@ const ArticlesList: FunctionComponent<ArticlesListProps> = ({
                 <strong>Categories: </strong>
                 {ar.category
                   .map((au) => {
-                    if (categoriesDict[au.$.term]) {
-                      return categoriesDict[au.$.term];
+                    const term: string = au?.$?.term || '';
+                    if (categoriesDict[term]) {
+                      return categoriesDict[term];
                     }
                   })
                   .filter((el) => el !== undefined)
@@ -306,6 +313,6 @@ const ArticlesList: FunctionComponent<ArticlesListProps> = ({
       )}
     </div>
   );
-}
+};
 
 export default ArticlesList;
